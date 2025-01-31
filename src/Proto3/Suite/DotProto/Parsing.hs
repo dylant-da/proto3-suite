@@ -289,7 +289,7 @@ messageOneOf = do symbol "oneof"
 
 messagePart :: ProtoParser DotProtoMessagePart
 messagePart = try (DotProtoMessageDefinition <$> enum)
-          <|> try (DotProtoMessageReserved   <$> reservedField)
+          <|> try (DotProtoMessageReserved   <$> reserved)
           <|> try (DotProtoMessageDefinition <$> message)
           <|> try messageOneOf
           <|> try (DotProtoMessageField      <$> messageField)
@@ -327,7 +327,8 @@ enumField = do fname <- identifier
 
 
 enumStatement :: ProtoParser DotProtoEnumPart
-enumStatement = try (DotProtoEnumOption <$> topOption)
+enumStatement = try (fmap DotProtoEnumReserved reserved)
+            <|> try (DotProtoEnumOption <$> topOption)
             <|> enumField
             <|> empty $> DotProtoEnumEmpty
 
@@ -340,18 +341,18 @@ enum = do symbol "enum"
 --------------------------------------------------------------------------------
 -- field reservations
 
-range :: ProtoParser DotProtoReservedField
+range :: ProtoParser DotProtoReserved
 range = do lookAhead (integer >> symbol "to") -- [note] parsec commits to this parser too early without this lookahead
            s <- fromInteger <$> integer
            symbol "to"
            e <- fromInteger <$> integer
            return $ FieldRange s e
 
-ranges :: ProtoParser [DotProtoReservedField]
+ranges :: ProtoParser [DotProtoReserved]
 ranges = commaSep1 (try range <|> (SingleField . fromInteger <$> integer))
 
-reservedField :: ProtoParser [DotProtoReservedField]
-reservedField = do symbol "reserved"
-                   v <- ranges <|> commaSep1 (ReservedIdentifier <$> stringLit)
-                   semi
-                   return v
+reserved :: ProtoParser [DotProtoReserved]
+reserved = do symbol "reserved"
+              v <- ranges <|> commaSep1 (ReservedIdentifier <$> stringLit)
+              semi
+              return v
