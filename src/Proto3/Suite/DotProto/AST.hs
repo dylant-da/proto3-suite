@@ -29,7 +29,7 @@ module Proto3.Suite.DotProto.AST
     , RPCMethod(..)
     , DotProtoMessagePart(..)
     , DotProtoField(..)
-    , DotProtoReserved(..)
+    , DotProtoReservedField(..)
   ) where
 
 import           Control.Applicative
@@ -281,7 +281,7 @@ data DotProtoEnumPart
   = DotProtoEnumField DotProtoIdentifier DotProtoEnumValue [DotProtoOption]
   | DotProtoEnumOption DotProtoOption
   | DotProtoEnumEmpty
-  | DotProtoEnumReserved   [DotProtoReserved]
+  | DotProtoEnumReserved   [DotProtoReservedField]
   deriving (Show, Eq)
 
 instance Arbitrary DotProtoEnumPart where
@@ -340,7 +340,7 @@ data DotProtoMessagePart
   = DotProtoMessageField DotProtoField
   | DotProtoMessageOneOf DotProtoIdentifier [DotProtoField]
   | DotProtoMessageDefinition DotProtoDefinition
-  | DotProtoMessageReserved   [DotProtoReserved]
+  | DotProtoMessageReserved   [DotProtoReservedField]
   | DotProtoMessageOption DotProtoOption
   deriving (Show, Eq)
 
@@ -369,7 +369,7 @@ instance Arbitrary DotProtoMessagePart where
         fields <- oneof [smallListOf1 arbitrary, arbitraryReservedLabels]
         return (DotProtoMessageReserved fields)
 
-      arbitraryReservedLabels :: Gen [DotProtoReserved]
+      arbitraryReservedLabels :: Gen [DotProtoReservedField]
       arbitraryReservedLabels = smallListOf1 (ReservedIdentifier <$> return "")
 
 data DotProtoField = DotProtoField
@@ -392,13 +392,13 @@ instance Arbitrary DotProtoField where
     dotProtoFieldComment <- pure mempty
     return (DotProtoField {..})
 
-data DotProtoReserved
+data DotProtoReservedField
   = SingleField Int
   | FieldRange  Int Int
   | ReservedIdentifier String
   deriving (Show, Eq)
 
-instance Arbitrary DotProtoReserved where
+instance Arbitrary DotProtoReservedField where
   arbitrary =
     oneof [arbitrarySingleField, arbitraryFieldRange]
       where

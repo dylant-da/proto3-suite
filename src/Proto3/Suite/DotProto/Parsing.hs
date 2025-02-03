@@ -341,17 +341,17 @@ enum = do symbol "enum"
 --------------------------------------------------------------------------------
 -- field reservations
 
-range :: ProtoParser DotProtoReserved
+range :: ProtoParser DotProtoReservedField
 range = do lookAhead (integer >> symbol "to") -- [note] parsec commits to this parser too early without this lookahead
            s <- fromInteger <$> integer
            symbol "to"
            e <- fromInteger <$> integer
            return $ FieldRange s e
 
-ranges :: ProtoParser [DotProtoReserved]
+ranges :: ProtoParser [DotProtoReservedField]
 ranges = commaSep1 (try range <|> (SingleField . fromInteger <$> integer))
 
-reserved :: ProtoParser [DotProtoReserved]
+reserved :: ProtoParser [DotProtoReservedField]
 reserved = do symbol "reserved"
               v <- ranges <|> commaSep1 (ReservedIdentifier <$> stringLit)
               semi
